@@ -1,4 +1,4 @@
-**Economic Indicator Dashboard
+Economic Indicator Dashboard
 
 
 <img width="1908" height="865" alt="image" src="https://github.com/user-attachments/assets/a6a1d1ed-e63e-4e05-ae44-7097563d3b88" />
