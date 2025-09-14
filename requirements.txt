@@ -1,0 +1,8 @@
+#fredapi==0.5.2
+#matplotlib==3.10.6
+#mplfinance==0.12.10b0
+#numpy==2.3.2
+pandas==2.3.2
+#plotly==6.2.0
+streamlit==1.48.1
+yfinance==0.2.65
