@@ -29,9 +29,9 @@ with sp_col:
         st.subheader('S&P 500', divider='gray')
         st.markdown(f'**{sp_latest_price_val:,.2f}**') 
         if dod_sp_val > 0:
-            st.markdown(f'+{dod_sp_val:.2%}')
+            st.markdown(f':green[+{dod_sp_val:.2%}]')
         else: 
-            st.markdown(f'{dod_sp_val:.2%}')
+            st.markdown(f':red[{dod_sp_val:.2%}]')
 
 
 with ftse_col: 
@@ -45,9 +45,9 @@ with ftse_col:
         st.subheader('FTSE 100', divider='gray')
         st.markdown(f'**{ftse_latest_price_val:,.2f}**') 
         if dod_ftse_val > 0:
-            st.markdown(f'+{dod_ftse_val:.2%}')
+            st.markdown(f':green[+{dod_ftse_val:.2%}]')
         else: 
-            st.markdown(f'{dod_ftse_val:.2%}')
+            st.markdown(f':red[{dod_ftse_val:.2%}]')
 
 
 with nasdaq_col: 
@@ -61,9 +61,9 @@ with nasdaq_col:
         st.subheader('Nasdaq', divider='gray')
         st.markdown(f'**{nasdaq_latest_price_val:,.2f}**') 
         if dod_nasdaq_val > 0:
-            st.markdown(f'+{dod_nasdaq_val:.2%}')
+            st.markdown(f':green[+{dod_nasdaq_val:.2%}]')
         else: 
-            st.markdown(f'{dod_nasdaq_val:.2%}')
+            st.markdown(f':red[{dod_nasdaq_val:.2%}]')
 
 
 with btc_col: 
@@ -77,9 +77,9 @@ with btc_col:
         st.subheader('BTC/USD', divider='gray')
         st.markdown(f'**{btc_latest_price_val:,.2f}**') 
         if dod_btc_val > 0:
-            st.markdown(f'+{dod_btc_val:.2%}')
+            st.markdown(f':green[+{dod_btc_val:.2%}]')
         else: 
-            st.markdown(f'{dod_btc_val:.2%}')
+            st.markdown(f':red[{dod_btc_val:.2%}]')
 
 
 with cable_col: 
@@ -93,9 +93,9 @@ with cable_col:
         st.subheader('USD/GBP', divider='gray')
         st.markdown(f'**{cable_latest_price_val:,.2f}**') 
         if dod_cable_val > 0:
-            st.markdown(f'+{dod_cable_val:.2%}')
+            st.markdown(f':green[+{dod_cable_val:.2%}]')
         else: 
-            st.markdown(f'{dod_cable_val:.2%}')
+            st.markdown(f':red[{dod_cable_val:.2%}]')
 
 
 #Get data based on ticker and time period
@@ -111,10 +111,10 @@ def main():
     with tab1:
         #Set sidebar user parameters     
         stocks_list = ['META', 'AAPL','AMZN', 'NFLX', 'GOOG', 'TSLA', 'NVDA', 'BTC-USD']
-        ticker = st.sidebar.selectbox('Select Stock Symbol:', stocks_list, index=2)
+        ticker = st.sidebar.selectbox('Select Stock Symbol:', stocks_list, index=1)
         time_period = st.sidebar.selectbox('Time Period', ['1mo', '6mo', '1y', '5y', 'max'])
         chart_type = st.sidebar.selectbox('Chart Type', ['Candlestick', 'Line'])
-        st.sidebar.info('Created by Darren Ofoe, view code on [Github](https://github.com/dofoe17.....)')
+        st.sidebar.info('Created by Darren Ofoe, view code on [Github](https://github.com/dofoe17/Economic-Dashboard/blob/main/Dashboard.py)')
 
 
         st.header(f'Stock Data for {ticker}')
@@ -124,7 +124,6 @@ def main():
         stock_df = get_stock_data(ticker, time_period)
 
         #Stock Visualisation
-        st.subheader('Candlestick Chart')
         fig = go.Figure()
         if chart_type == 'Candlestick': 
                 fig.add_trace(go.Candlestick(
@@ -138,12 +137,12 @@ def main():
         else: 
             fig = px.line(stock_df, x=stock_df.index, y=stock_df['Close'])
 
-        fig.update_layout(title=f'{ticker} Candlestick Chart', xaxis_rangeslider_visible=False)
+        fig.update_layout(title=f'{ticker} Chart', xaxis_rangeslider_visible=False)
         st.plotly_chart(fig, use_container_width=True)
 
 
         #Summary of data 
-        with st.expander('Data Preview'):
+        with st.expander('Data Preview - Click to expand'):
             st.dataframe(
                 stock_df,
                 column_config={'Date':st.column_config.DateColumn('Date', format='YYYY-MM-DD')},
