@@ -15,7 +15,7 @@ st.title('Economic Indicators Dashboard')
 end_date = pd.to_datetime('today')#.strftime('%Y-%m-%d')
 start_date = end_date - pd.DateOffset(years=1) #1 year ago
 
-sp_col, ftse_col, nasdaq_col, cable_col, btc_col = st.columns([1, 1, 1, 1, 1])
+sp_col, ftse_col, nasdaq_col, cable_col, btc_col = st.columns(5)
 
 #Set the headliners for indices on dashboard
 with sp_col: 
@@ -32,6 +32,17 @@ with sp_col:
             st.markdown(f':green[+{dod_sp_val:.2%}]')
         else: 
             st.markdown(f':red[{dod_sp_val:.2%}]')
+        
+        sp_fig = px.line(sp_data, x=sp_data.index, y=sp_data['^GSPC'])
+        sp_fig.update_layout(
+            yaxis_showticklabels=False,
+            yaxis_title=None,
+            xaxis_visible=False,
+            autosize=False, 
+            height=225
+            )
+        sp_fig.update_traces(line_color='purple')
+        st.plotly_chart(sp_fig, use_container_width=True)
 
 
 with ftse_col: 
@@ -49,6 +60,17 @@ with ftse_col:
         else: 
             st.markdown(f':red[{dod_ftse_val:.2%}]')
 
+        ftse_fig = px.line(ftse_data, x=ftse_data.index, y=ftse_data['^FTSE'])
+        ftse_fig.update_layout(
+            yaxis_showticklabels=False,
+            yaxis_title=None,
+            xaxis_visible=False,
+            autosize=False, 
+            height=225
+            )
+        ftse_fig.update_traces(line_color='orange')
+        st.plotly_chart(ftse_fig, use_container_width=True)
+
 
 with nasdaq_col: 
     with st.container(border=True): 
@@ -64,6 +86,17 @@ with nasdaq_col:
             st.markdown(f':green[+{dod_nasdaq_val:.2%}]')
         else: 
             st.markdown(f':red[{dod_nasdaq_val:.2%}]')
+
+        nasdaq_fig = px.line(nasdaq_data, x=nasdaq_data.index, y=nasdaq_data['NQ=F'])
+        nasdaq_fig.update_layout(
+            yaxis_showticklabels=False,
+            yaxis_title=None,
+            xaxis_visible=False,
+            autosize=False, 
+            height=225
+            )
+        nasdaq_fig.update_traces(line_color='darkblue')
+        st.plotly_chart(nasdaq_fig, use_container_width=True)
 
 
 with btc_col: 
@@ -81,6 +114,18 @@ with btc_col:
         else: 
             st.markdown(f':red[{dod_btc_val:.2%}]')
 
+        btc_fig = px.line(btc_data, x=btc_data.index, y=btc_data['BTC-USD'])
+        btc_fig.update_layout(
+            yaxis_showticklabels=False,
+            yaxis_title=None,
+            xaxis_visible=False,
+            autosize=False, 
+            height=225
+            )
+        btc_fig.update_traces(line_color='yellow')
+        st.plotly_chart(btc_fig, use_container_width=True)
+
+
 
 with cable_col: 
     with st.container(border=True): 
@@ -97,6 +142,17 @@ with cable_col:
         else: 
             st.markdown(f':red[{dod_cable_val:.2%}]')
 
+        cable_fig = px.line(cable_data, x=cable_data.index, y=cable_data['GBP=X'])
+        cable_fig.update_layout(
+            yaxis_showticklabels=False,
+            yaxis_title=None,
+            xaxis_visible=False,
+            autosize=False, 
+            height=225
+            )
+        cable_fig.update_traces(line_color='white')
+        st.plotly_chart(cable_fig, use_container_width=True)
+
 
 #Get data based on ticker and time period
 def get_stock_data(ticker, period): 
@@ -105,23 +161,35 @@ def get_stock_data(ticker, period):
     return stock_df
 
 
+#Calculate metric data
+def calculate_metric_data(stock_df): 
+    last_price = stock_df.iloc[-1]['Close']
+    previous_day_close = stock_df.iloc[-2]['Close']
+    percentage_change = ((last_price - previous_day_close) / previous_day_close) * 100 
+    return percentage_change, last_price
+
 def main(): 
 
     tab1, tab2 = st.tabs(['Stock Dashboard', 'Economic Indicators'])
     with tab1:
         #Set sidebar user parameters     
-        stocks_list = ['META', 'AAPL','AMZN', 'NFLX', 'GOOG', 'TSLA', 'NVDA', 'BTC-USD']
-        ticker = st.sidebar.selectbox('Select Stock Symbol:', stocks_list, index=1)
-        time_period = st.sidebar.selectbox('Time Period', ['1mo', '6mo', '1y', '5y', 'max'])
-        chart_type = st.sidebar.selectbox('Chart Type', ['Candlestick', 'Line'])
         st.sidebar.info('Created by Darren Ofoe, view code on [Github](https://github.com/dofoe17/Economic-Dashboard/blob/main/Dashboard.py)')
 
-
+        #Create dropdown within app 
+        stocks_list = ['META', 'AAPL','AMZN', 'NFLX', 'GOOG', 'TSLA', 'NVDA', 'BTC-USD']
+        ticker = st.selectbox('Select Stock Ticker:', stocks_list, index=0) #Index defaults value to first option
+        time_period = st.selectbox('Time Period', ['1mo', '6mo', '1y', '5y', 'max'], index=2)
+        chart_type = st.selectbox('Chart Type', ['Candlestick', 'Line'])         
+                
         st.header(f'Stock Data for {ticker}')
-
-
-        #if symbol: 
+        
         stock_df = get_stock_data(ticker, time_period)
+
+        percentage_change, last_price = calculate_metric_data(stock_df)
+
+        #Add metrics to provide at glance summary
+        st.metric('Close Price', f'${last_price:,.2f}', delta=f'{percentage_change:+.2f}%')
+
 
         #Stock Visualisation
         fig = go.Figure()
@@ -145,8 +213,15 @@ def main():
         with st.expander('Data Preview - Click to expand'):
             st.dataframe(
                 stock_df,
-                column_config={'Date':st.column_config.DateColumn('Date', format='YYYY-MM-DD')},
-                #format the numbers in the table
+                column_config={
+                    'Date':st.column_config.DateColumn(
+                    'Date',
+                    format='YYYY-MM-DD'
+                    ), 
+                    'Volume':st.column_config.NumberColumn(
+                        'Volume', format='localized'
+                    )
+                    },
                 #maybe have the table on the side of the dashboard
                 use_container_width=True, 
                 hide_index=False
