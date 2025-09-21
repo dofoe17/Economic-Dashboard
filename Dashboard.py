@@ -4,12 +4,11 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 import matplotlib.pyplot as plt
-from fredapi import Fred
+
 
 st.set_page_config(page_title='My Economic Dashboard', page_icon='💹', layout='wide')
 
-st.title('Economic Indicators Dashboard')
-
+st.title('Stock App Dashboard')
 
 #Date range 
 end_date = pd.to_datetime('today')#.strftime('%Y-%m-%d')
@@ -171,102 +170,72 @@ def calculate_metric_data(stock_df):
 
 def main(): 
 
-    tab1, tab2 = st.tabs(['Stock Dashboard', 'Economic Indicators'])
-    with tab1:
-
-        #Set sidebar user parameters     
-        st.sidebar.title('Parameters')
-        stocks_list = ['META', 'AAPL','AMZN', 'NFLX', 'GOOG', 'TSLA', 'NVDA', 'BTC-USD']
-        ticker = st.sidebar.selectbox('Select Stock Ticker:', stocks_list, index=0) #Index defaults value to first option
-        tickerdata = yf.Ticker(ticker)
-        time_period = st.sidebar.selectbox('Time Period', ['1mo', '6mo', '1y', '5y', 'max'], index=2)
-        chart_type = st.sidebar.selectbox('Chart Type', ['Candlestick', 'Line'])        
-        st.sidebar.info('Created by Darren Ofoe, view code on [Github](https://github.com/dofoe17/Economic-Dashboard/blob/main/Dashboard.py)') 
-                
-        st.header(f'Stock Data for {ticker}')
-        
-        stock_df = get_stock_data(ticker, time_period)
-
-        percentage_change, last_price = calculate_metric_data(stock_df)
-
-        #Add metrics to provide at glance summary
-        st.metric('Close Price', f'${last_price:,.2f}', delta=f'{percentage_change:+.2f}%')
-
-
-        #Stock Visualisation
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            fig = go.Figure()
-            if chart_type == 'Candlestick': 
-                    fig.add_trace(go.Candlestick(
-                        x=stock_df.index, 
-                        open=stock_df['Open'], 
-                        high=stock_df['High'], 
-                        low=stock_df['Low'], 
-                        close=stock_df['Close']
-                    )
-            )
-            else: 
-                fig = px.line(stock_df, x=stock_df.index, y=stock_df['Close'])
-
-            fig.update_layout(title=f'{ticker} Chart', xaxis_rangeslider_visible=False)
-            st.plotly_chart(fig, use_container_width=True)
-    
-
-        #Pull recommendation from yfinance data
-        try:
-            string_rec = tickerdata.info['recommendationKey']
-            st.info(f'Analyst recommendation: {string_rec}')
-        except KeyError:
-            st.error(f'Yahoo finance cannot find recommendation for: {ticker}') 
-
-
-        #Summary of data 
-        with col2:
-            with st.expander('Data Preview - Click to expand'):
-                st.dataframe(
-                    stock_df,
-                    column_config={
-                        'Date':st.column_config.DateColumn(
-                        'Date',
-                        format='YYYY-MM-DD'
-                        ), 
-                        'Volume':st.column_config.NumberColumn(
-                            'Volume', format='localized'
-                        )
-                        },
-                    #maybe have the table on the side of the dashboard
-                    use_container_width=True, 
-                    hide_index=False
-                    )  
+    #Set sidebar user parameters     
+    st.sidebar.title('Parameters')
+    stocks_list = ['META', 'AAPL','AMZN', 'NFLX', 'GOOG', 'TSLA', 'NVDA', 'BTC-USD']
+    ticker = st.sidebar.selectbox('Select Stock Ticker:', stocks_list, index=0) #Index defaults value to first option
+    tickerdata = yf.Ticker(ticker)
+    time_period = st.sidebar.selectbox('Time Period', ['1mo', '6mo', '1y', '5y', 'max'], index=2)
+    chart_type = st.sidebar.selectbox('Chart Type', ['Candlestick', 'Line'])        
+    st.sidebar.info('Created by Darren Ofoe, view code on [Github](https://github.com/dofoe17/Economic-Dashboard/blob/main/Dashboard.py)') 
             
+    st.header(f'Stock Data for {ticker}')
+    
+    stock_df = get_stock_data(ticker, time_period)
+
+    percentage_change, last_price = calculate_metric_data(stock_df)
+
+    #Add metrics to provide at glance summary
+    st.metric('Close Price', f'${last_price:,.2f}', delta=f'{percentage_change:+.2f}%')
+
+
+    #Stock Visualisation
+    fig = go.Figure()
+    if chart_type == 'Candlestick': 
+            fig.add_trace(go.Candlestick(
+                x=stock_df.index, 
+                open=stock_df['Open'], 
+                high=stock_df['High'], 
+                low=stock_df['Low'], 
+                close=stock_df['Close']
+            )
+    )
+    else: 
+        fig = px.line(stock_df, x=stock_df.index, y=stock_df['Close'])
+
+    fig.update_layout(title=f'{ticker} Chart', xaxis_rangeslider_visible=False)
+    st.plotly_chart(fig, use_container_width=True)
+
+
+    #Pull recommendation from yfinance data
+    try:
+        string_rec = tickerdata.info['recommendationKey']
+        st.info(f'Analyst recommendation: {string_rec}')
+    except KeyError:
+        st.error(f'Yahoo finance cannot find recommendation for: {ticker}') 
+
+ 
+
+    tab1, tab2 = st.tabs(['Data Summary', 'Stock Info'])
+    with tab1:    #Summary of data 
+        with st.expander('Data Preview - Click to expand'):
+            st.dataframe(
+                stock_df,
+                column_config={
+                    'Date':st.column_config.DateColumn(
+                    'Date',
+                    format='YYYY-MM-DD'
+                    ), 
+                    'Volume':st.column_config.NumberColumn(
+                        'Volume', format='localized'
+                    )
+                    },
+                use_container_width=True, 
+                hide_index=False
+                ) 
     with tab2: 
-        fred_api = st.secrets['API_KEY'] ### DO NOT SHARE ####
-        fred = Fred(api_key=fred_api)
-        unrate = fred.get_series('UNRATE')
-        cpi = fred.get_series('CORESTICKM159SFRBATL')
-        
-        #visualisation for fred data 
-        #Unemployment Rate vs Inflation Rate Visualisation
-        fig, ax1 = plt.subplots(figsize=(10, 5))
-        ax2 = ax1.twinx() 
-
-        #Add title 
-        plt.title('Key Economic Indicators', color='white')
-
-        #Add plots
-        l1 = ax1.plot(unrate, color='b', label="Unemployment Rate")
-        l2 = ax1.plot(cpi, color='g', label="Inflation Rate")
-
-        #Add labels 
-        ax1.set_xlabel('Date')
-        ax1.set_ylabel('Percentage (%)', fontsize=12)
-
-        ax1.xaxis.label.set_color('white')
-        ax1.yaxis.label.set_color('white')
-
-        #Add legend
-        ax1.legend(handles=l1+l2, labelcolor='linecolor')
-        st.plotly_chart(fig, use_container_width=True)
-
+        stock_summary = tickerdata.info['longBusinessSummary']
+        stock_name = tickerdata.info['longName']
+        st.subheader(stock_name)
+        st.info(stock_summary)
 main()
